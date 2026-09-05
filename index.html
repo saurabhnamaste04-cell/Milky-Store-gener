@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Milky Store | Milky Transport</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f6fbff;color:#17324d}
+header{background:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;box-shadow:0 2px 12px #0001;z-index:5}
+.logo{font-size:24px;font-weight:800}.logo span{color:#198cff}
+.cart{border:0;background:#eaf5ff;padding:10px 15px;border-radius:22px;font-weight:700}
+.hero{padding:42px 20px;text-align:center;background:linear-gradient(145deg,#eaf7ff,#fff)}
+.hero h1{font-size:38px;margin:8px 0}.hero p{color:#58718a}.milk{font-size:75px}
+.wrap{max-width:760px;margin:auto;padding:22px 16px}
+.card{background:#fff;border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 5px 22px #153b5512}
+.price{font-size:25px;font-weight:800;color:#1387ee}.qty{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.qty button{flex:1;min-width:100px;padding:13px;border:1px solid #cfe4f5;background:#fff;border-radius:12px;font-weight:700;cursor:pointer}
+.qty button.active{background:#168bf1;color:#fff;border-color:#168bf1}
+.add{width:100%;padding:15px;border:0;border-radius:13px;background:#1288ed;color:white;font-size:17px;font-weight:800;cursor:pointer}
+label{display:block;font-weight:700;margin:13px 0 6px}input,select{width:100%;padding:13px;border:1px solid #cbdce8;border-radius:10px;font-size:16px}
+.summary{display:flex;justify-content:space-between;font-weight:700;margin:10px 0}.notice{background:#fff8df;padding:12px;border-radius:12px;font-size:14px}
+footer{text-align:center;padding:25px;color:#688096}
+</style>
+<link rel="manifest" href="manifest.webmanifest"></head>
+<body>
+<header><div class="logo">🥛 Milky <span>Store</span></div><button class="cart" onclick="document.getElementById('order').scrollIntoView()">🛒 Cart <span id="count">0</span></button></header>
+<section class="hero"><div class="milk">🥛</div><h1>Fresh Milk, Local & Simple</h1><p>Milky Transport · New Area, Zora Mandir · Up to 500m</p></section>
+<main class="wrap">
+<div class="card">
+<h2>Milk</h2><p>Fresh milk</p><div class="price">₹60 / kg</div>
+<div class="qty"><button onclick="selectQty(.5,this)">500g — ₹30</button><button onclick="selectQty(1,this)">1kg — ₹60</button><button onclick="selectQty(2,this)">2kg — ₹120</button></div>
+<button class="add" onclick="addToCart()">Add to Cart</button>
+</div>
+<div class="card" id="order">
+<h2>Your Order</h2><div class="summary"><span>Quantity</span><span id="chosen">Not selected</span></div><div class="summary"><span>Total</span><span id="total">₹0</span></div>
+<label>Your name</label><input id="name" placeholder="Enter your name">
+<label>Mobile number</label><input id="phone" inputmode="numeric" placeholder="10-digit mobile number">
+<label>Payment</label><select id="payment"><option>Cash on pickup</option><option>Online payment</option></select>
+<div id="onlinePayBox" style="display:none;margin:10px 0">
+  <button class="add" style="background:#20a060" onclick="openPayment()">💳 Pay Online</button>
+  <p style="margin:8px 0;color:#58718a;font-size:13px">Scan the QR and pay the exact order total. After payment, tap Place Order.</p>
+</div>
+<div id="payModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:20;padding:20px;overflow:auto">
+  <div style="max-width:430px;margin:30px auto;background:#fff;border-radius:20px;padding:20px;text-align:center">
+    <h2 style="margin-top:0">Pay Online</h2>
+    <p style="font-size:20px;font-weight:800">Amount: <span id="payAmount">₹0</span></p>
+    <img src="qr_only.png" alt="Milky Store UPI QR" style="width:100%;max-width:330px;border-radius:12px;border:1px solid #ddd">
+    <p style="font-size:14px;color:#58718a">Open any UPI app, scan this QR and pay the amount shown above.</p>
+    <button class="add" onclick="closePayment()">Done / Close</button>
+  </div>
+</div>
+<button class="add" style="margin:8px 0 10px;background:#17324d" onclick="requestLocation()">📍 Allow Location</button>
+<button class="add" style="margin:0 0 12px;background:#1288ed" onclick="checkLocation()">🔄 Check My Location</button>
+<p id="locationStatus" class="notice">📍 Service is limited to customers within 500 metres of the Milky Store pickup point in New Area, Zora Mandir.</p>
+<button class="add" onclick="placeOrder()">Place Order</button>
+</div>
+</main>
+<footer>© Milky Store · Milky Transport</footer>
+<script>
+let q=0,count=0;
+function selectQty(v,b){q=v;document.querySelectorAll('.qty button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('chosen').textContent=v<1?'500g':v+'kg';document.getElementById('total').textContent='₹'+(v*60)}
+function addToCart(){if(!q){alert('Please select a quantity first.');return}count=1;document.getElementById('count').textContent=count;document.getElementById('order').scrollIntoView({behavior:'smooth'})}
+const storeLat=24.9112072, storeLng=84.1834335; let locationOK=false;
+function distanceMeters(lat1,lon1,lat2,lon2){const R=6371000,rad=Math.PI/180,dLat=(lat2-lat1)*rad,dLon=(lon2-lon1)*rad;const a=Math.sin(dLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(a));}
+function requestLocation(){if(!navigator.geolocation){alert('Your browser does not support location.');return}navigator.geolocation.getCurrentPosition(pos=>{const d=distanceMeters(pos.coords.latitude,pos.coords.longitude,storeLat,storeLng);locationOK=d<=500;document.getElementById('locationStatus').textContent=locationOK?`✅ Location allowed. You are about ${Math.round(d)}m away.`:`❌ Location allowed, but you are about ${Math.round(d)}m away. Ordering is only within 500m.`;},()=>{alert('Location permission was not allowed. Please allow location for this site in Chrome settings.');},{enableHighAccuracy:true,timeout:10000});}
+function checkLocation(){const el=document.getElementById('locationStatus');if(!navigator.geolocation){el.textContent='❌ Location is not supported on this device.';return}el.textContent='Checking your location…';navigator.geolocation.getCurrentPosition(pos=>{const d=distanceMeters(pos.coords.latitude,pos.coords.longitude,storeLat,storeLng);locationOK=d<=500;el.textContent=locationOK?`✅ You are about ${Math.round(d)}m away. Ordering is available.`:`❌ You are about ${Math.round(d)}m away. Ordering is available only within 500m.`;},()=>{el.textContent='❌ Please allow location access to check the 500m service area.'},{enableHighAccuracy:true,timeout:10000});}
+
+document.getElementById('payment').addEventListener('change', function(){
+  document.getElementById('onlinePayBox').style.display =
+    this.value === 'Online payment' ? 'block' : 'none';
+});
+function openPayment(){
+  if(!q){ alert('Please select a quantity first.'); return; }
+  document.getElementById('payAmount').textContent = '₹' + (q*60);
+  document.getElementById('payModal').style.display = 'block';
+}
+function closePayment(){
+  document.getElementById('payModal').style.display = 'none';
+}
+function placeOrder(){let n=document.getElementById('name').value.trim(),p=document.getElementById('phone').value.trim(),pay=document.getElementById('payment').value;if(!q||!n||!/^\d{10}$/.test(p)){alert('Please select quantity, enter your name and a valid 10-digit mobile number.');return}
+if(!locationOK){alert('Please check your location first. Orders are accepted only within 500m.');return}let qty=q<1?'500g':q+'kg', total=q*60;let msg=`Milky Store Order%0A%0AName: ${encodeURIComponent(n)}%0AMobile: ${encodeURIComponent(p)}%0AQuantity: ${encodeURIComponent(qty)}%0ATotal: ₹${total}%0APayment: ${encodeURIComponent(pay)}%0A%0AIf online payment was selected, customer was shown the UPI QR for the exact total.%0A%0ALocation: Customer will be within 500m of New Area, Zora Mandir.`;window.open('https://wa.me/918797507364?text='+msg,'_blank');}
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("service-worker.js");}</script></body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "Milky Store | Milky Transport",
+  "short_name": "Milky Store",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6fbff",
+  "theme_color": "#17324d",
+  "description": "Fresh milk ordering app for Milky Store."
+}
